@@ -37,8 +37,42 @@
 #include "php_pcon.h"
 #include "zend_exceptions.h"
 #include "ext/standard/info.h"
-
+#define HAVE_PCON 1
 #if HAVE_PCON
+
+zval *get_zval(zend_execute_data *zdata, int node_type, const znode_op *node)
+{
+    zend_free_op should_free;
+    zval* r = zend_get_zval_ptr(zdata->opline, node_type, node, zdata, &should_free, BP_VAR_IS);
+    return r;
+}
+
+static int conc_collect(zend_execute_data *execute_data)
+{
+    zval* op1 = get_zval(execute_data, execute_data->opline->op1_type, &execute_data->opline->op1);
+    zval* op2 = get_zval(execute_data, execute_data->opline->op2_type, &execute_data->opline->op2);
+
+    php_printf("lo: %d\n", execute_data->opline->lineno);
+    php_printf("op1_type: %d\n", execute_data->opline->op1_type);
+    php_printf("op1: %d\n", op1->value);
+    php_printf("op2_type: %d\n", execute_data->opline->op2_type);
+    php_printf("op2: %d\n", Z_TYPE_P(op2) == IS_LONG);
+    php_printf("op2: %d\n", execute_data->symbol_table);
+//    php_printf("op_type: %d\n", execute_data->opline->op1_type);
+//    php_printf("lo: %d\n", execute_data->opline->lineno);
+//    php_printf("op_type: %d\n", execute_data->opline->op1_type);
+    return ZEND_USER_OPCODE_DISPATCH;
+}
+
+PHP_MINIT_FUNCTION(pcon)
+{
+    zend_set_user_opcode_handler(ZEND_IS_EQUAL, conc_collect);
+    zend_set_user_opcode_handler(ZEND_ADD, conc_collect);
+    zend_set_user_opcode_handler(ZEND_ASSIGN, conc_collect);
+    return SUCCESS;
+}
+
+
 
 /* Argument info for each function, used for reflection */
 ZEND_BEGIN_ARG_INFO_EX(arginfo_pcon_nop, 0, 1, 0)
@@ -55,7 +89,7 @@ zend_module_entry pcon_module_entry = {
     STANDARD_MODULE_HEADER,
     PHP_PCON_EXTNAME,
     functions,
-    NULL,
+    PHP_MINIT(pcon),
     NULL,
     NULL,
     NULL,
@@ -72,12 +106,13 @@ ZEND_GET_MODULE(pcon)
 PHP_FUNCTION(pcon_nop)
 {
     zend_string *str;
-
     ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
         Z_PARAM_STR(str)
     ZEND_PARSE_PARAMETERS_END();
+    php_printf("2\n");
 
     RETVAL_STR(str);
 }
+
 
 #endif

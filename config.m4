@@ -1,17 +1,17 @@
 dnl $Id$
-dnl config.m4 for extension skeleton
+dnl config.m4 for extension pcon
 
 sinclude(./autoconf/pecl.m4)
 sinclude(./autoconf/php-executable.m4)
 
-PECL_INIT([skeleton])
+PECL_INIT([pcon])
 
-PHP_ARG_ENABLE(skeleton, whether to enable skeleton, [ --enable-skeleton   Enable skeleton])
+PHP_ARG_ENABLE(pcon, whether to enable pcon, [ --enable-pcon   Enable pcon])
 
-if test "$PHP_skeleton" != "no"; then
-  AC_DEFINE(HAVE_SKELETON, 1, [whether skeleton is enabled])
-  PHP_NEW_EXTENSION(skeleton, skeleton.c, $ext_shared)
+if test "$PHP_pcon" != "no"; then
+  AC_DEFINE(HAVE_PCON, 1, [whether pcon is enabled])
+  PHP_NEW_EXTENSION(pcon, pcon.c, $ext_shared)
 
   PHP_ADD_MAKEFILE_FRAGMENT
-  PHP_INSTALL_HEADERS([ext/skeleton], [php_skeleton.h])
+  PHP_INSTALL_HEADERS([ext/pcon], [php_pcon.h])
 fi

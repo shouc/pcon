@@ -1,10 +1,10 @@
 // $Id$
 // vim:ft=javascript
 
-ARG_ENABLE("skeleton", "enable skeleton", "no");
+ARG_ENABLE("pcon", "enable skeleton", "no");
 
-if (PHP_SKELETON != "no") {
-	EXTENSION("skeleton", "skeleton.c");
-	AC_DEFINE('HAVE_SKELETON', 1 , 'whether skeleton is enabled');
-	PHP_INSTALL_HEADERS("ext/skeleton/", "php_skeleton.h");
+if (PHP_PCON != "no") {
+	EXTENSION("pcon", "pcon.c");
+	AC_DEFINE('HAVE_PCON', 1 , 'whether pcon is enabled');
+	PHP_INSTALL_HEADERS("ext/pcon/", "php_pcon.h");
 }
