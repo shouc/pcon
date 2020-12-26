@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.8)
-project(skeleton C)
+project(pcon)
+set(CMAKE_CXX_STANDARD 11)
 
 add_compile_definitions(HAVE_SKELETON)
 
-set(SOURCE_FILES php_pcon pcon.c)
+set(SOURCE_FILES php_pcon pcon.cc)
 
 execute_process (
         COMMAND php-config --include-dir
@@ -18,10 +19,9 @@ include_directories(${PHP_SOURCE}/main)
 include_directories(${PHP_SOURCE}/Zend)
 include_directories(${PHP_SOURCE}/TSRM)
 include_directories(${PROJECT_SOURCE_DIR})
-
 add_custom_target(configure
         COMMAND phpize && ./configure
         DEPENDS ${SOURCE_FILES}
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-add_library(___ EXCLUDE_FROM_ALL ${SOURCE_FILES})
+add_library(___ SHARED ${SOURCE_FILES})
