@@ -6,6 +6,7 @@
 #define PCON_SMTLIB_H
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
 class smt {
 
@@ -40,6 +41,12 @@ public:
                    const bool& v_right comment_arg){
         sink << "(assert (=( " << v_left << " " << v_right << ")";
         end_with_comment
+    }
+    ~smt(){
+        std::ofstream smt_file;
+        smt_file.open ("example.txt");
+        smt_file << sink.str();
+        smt_file.close();
     }
 
 };
