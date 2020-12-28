@@ -75,11 +75,7 @@ std::map<void*, std::string> ref_to_expr;
 smt* smt_sink;
 
 
-#define insert_or_assign_cc17(map, offset, nval) \
-    if (map.find(offset) == map.end())\
-        map.emplace(offset, nval);\
-    else\
-        map[offset] = nval;
+
 
 
 inline void retrieve_ref_by_zv(void* ref, zval*& res){
@@ -237,7 +233,7 @@ void handle_equal(zend_execute_data* execute_data,
             {
                 std::string op_expr;
                 retrieve_ref_by_expr(Z_RES_VAL_P(op2), op_expr, "Int", __line_number);
-                smt_sink->add_equal(op1_expr, op_expr, __line_number);
+                smt_sink->add_equal_expr(op1_expr, op_expr, __line_number);
                 break;
             }
             default:
@@ -247,7 +243,7 @@ void handle_equal(zend_execute_data* execute_data,
 
     if (__is_not_res_op1 && __is_not_res_op2)
         // both are expr
-        smt_sink->add_equal(op1_expr, op2_expr, __line_number);
+        smt_sink->add_equal_expr(op1_expr, op2_expr, __line_number);
 
     if (!(__is_not_res_op1) && __is_not_res_op2){
         // op1 is res, op2 expr
@@ -319,7 +315,7 @@ void handle_equal(zend_execute_data* execute_data,
                         // get op2 expr
                         retrieve_ref_by_expr(Z_RES_VAL_P(op2), _op1_expr, "Int", __line_number);
                         retrieve_ref_by_expr(Z_RES_VAL_P(op2), _op2_expr, "Int", __line_number);
-                        smt_sink->add_equal(_op1_expr, _op2_expr, __line_number);
+                        smt_sink->add_equal_expr(_op1_expr, _op2_expr, __line_number);
                         break;
                     }
                     case IS_LONG:
