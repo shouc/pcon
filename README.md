@@ -13,3 +13,18 @@ make && make install
 ### TODO
 * Add handler for other comparison & assign opcode
 * Link ABC and Z3
+
+
+### Example
+```php
+<?php
+$a = $argv; // abstract interpretation
+$b = true;
+echo $b == $a; // type juggling
+```
+
+would yield
+```
+(declare-const v0x7f52fba5c008 Int);L2
+(assert (!= v0x7f52fba5c008 0));L4
+```
