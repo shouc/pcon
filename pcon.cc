@@ -163,16 +163,22 @@ void handle_assign(zend_execute_data* execute_data,
 }
 #define __is_not_res_op1 op1_res == nullptr
 #define __is_not_res_op2 op2_res == nullptr
+#define __equal_then_else(op1, op2) \
+        if (is_equal)     \
+            {op1}           \
+        else              \
+            {op2}
 void handle_equal(zend_execute_data* execute_data,
                    zval* op1,
                    zval* op2,
-                   unsigned int& T){
+                   bool is_equal,
+                   unsigned int& T) {
 
-    zval* op1_res;
+    zval *op1_res;
     std::string op1_expr;
-    if (Z_TYPE_P(op1) == IS_REFERENCE){
+    if (Z_TYPE_P(op1) == IS_REFERENCE) {
         retrieve_ref_by_zv(Z_REFVAL_P(op1), op1_res);
-        if (__is_not_res_op1){
+        if (__is_not_res_op1) {
             switch (Z_TYPE_P(op2)) {
                 case IS_TRUE:
                 case IS_FALSE:
@@ -190,11 +196,11 @@ void handle_equal(zend_execute_data* execute_data,
     } else
         op1_res = op1;
 
-    zval* op2_res;
+    zval *op2_res;
     std::string op2_expr;
-    if (Z_TYPE_P(op2) == IS_REFERENCE){
+    if (Z_TYPE_P(op2) == IS_REFERENCE) {
         retrieve_ref_by_zv(Z_REFVAL_P(op2), op2_res);
-        if (__is_not_res_op2){
+        if (__is_not_res_op2) {
             switch (op1_res == nullptr ? IS_LONG : Z_TYPE_P(op1_res)) {
                 case IS_LONG:
                     retrieve_ref_by_expr(Z_REFVAL_P(op2), op2_expr, "Int", __line_number);
@@ -215,25 +221,30 @@ void handle_equal(zend_execute_data* execute_data,
     } else
         op2_res = op2;
 
-    if (__is_not_res_op1 && !(__is_not_res_op2)){
+    if (__is_not_res_op1 && !(__is_not_res_op2)) {
         // op1 is expr, op2 is res
         switch (Z_TYPE_P(op2_res)) {
             case IS_LONG:
-                smt_sink->add_equal(op1_expr, Z_LVAL_P(op2_res), __line_number);
+                __equal_then_else(
+                        smt_sink->add_equal(op1_expr, Z_LVAL_P(op2_res), __line_number);,
+                        smt_sink->add_nequal(op1_expr, Z_LVAL_P(op2_res), __line_number);
+                )
                 break;
             case IS_TRUE:
-                smt_sink->add_equal(op1_expr, true, __line_number);
+                smt_sink->add_equal(op1_expr, is_equal, __line_number);
                 break;
             case IS_FALSE:
-                smt_sink->add_equal(op1_expr, false, __line_number);
+                smt_sink->add_equal(op1_expr, !is_equal, __line_number);
                 break;
             case IS_RESOURCE:
             case IS_OBJECT:
-            case IS_ARRAY:
-            {
+            case IS_ARRAY: {
                 std::string op_expr;
                 retrieve_ref_by_expr(Z_RES_VAL_P(op2), op_expr, "Int", __line_number);
-                smt_sink->add_equal_expr(op1_expr, op_expr, __line_number);
+                __equal_then_else(
+                        smt_sink->add_equal_expr(op1_expr, op_expr, __line_number);,
+                        smt_sink->add_equal_expr(op1_expr, op_expr, __line_number);
+                )
                 break;
             }
             default:
@@ -241,13 +252,17 @@ void handle_equal(zend_execute_data* execute_data,
         }
     }
 
-    if (__is_not_res_op1 && __is_not_res_op2)
+    if (__is_not_res_op1 && __is_not_res_op2){
         // both are expr
-        smt_sink->add_equal_expr(op1_expr, op2_expr, __line_number);
+        __equal_then_else(
+                smt_sink->add_equal_expr(op1_expr, op2_expr, __line_number);,
+                smt_sink->add_nequal_expr(op1_expr, op2_expr, __line_number);
+        )
+    }
 
     if (!(__is_not_res_op1) && __is_not_res_op2){
         // op1 is res, op2 expr
-        return handle_equal(execute_data, op2, op1, T);
+        return handle_equal(execute_data, op2, op1, is_equal, T);
     }
 
     if (!(__is_not_res_op1) && !(__is_not_res_op2)){
@@ -262,7 +277,10 @@ void handle_equal(zend_execute_data* execute_data,
                         // get op2 expr
                         std::string op_expr;
                         retrieve_ref_by_expr(Z_RES_VAL_P(op2), op_expr, "Int", __line_number);
-                        smt_sink->add_equal(op_expr, Z_LVAL_P(op1_res), __line_number);
+                        __equal_then_else(
+                                smt_sink->add_equal(op_expr, Z_LVAL_P(op1_res), __line_number);,
+                                smt_sink->add_nequal(op_expr, Z_LVAL_P(op1_res), __line_number);
+                        )
                         break;
                     }
                     default:
@@ -278,7 +296,11 @@ void handle_equal(zend_execute_data* execute_data,
                         // get op2 expr
                         std::string op_expr;
                         retrieve_ref_by_expr(Z_RES_VAL_P(op2), op_expr, "Bool", __line_number);
-                        smt_sink->add_equal(op_expr, true, __line_number);
+                        __equal_then_else(
+                            smt_sink->add_equal(op_expr, true, __line_number);,
+                            smt_sink->add_nequal(op_expr, true, __line_number);
+                        )
+
                         break;
                     }
                     default:
@@ -294,7 +316,10 @@ void handle_equal(zend_execute_data* execute_data,
                         // get op2 expr
                         std::string op_expr;
                         retrieve_ref_by_expr(Z_RES_VAL_P(op2), op_expr, "Bool", __line_number);
-                        smt_sink->add_equal(op_expr, false, __line_number);
+                        __equal_then_else(
+                            smt_sink->add_equal(op_expr, false, __line_number);,
+                            smt_sink->add_nequal(op_expr, false, __line_number);
+                        )
                         break;
                     }
                     default:
@@ -315,13 +340,16 @@ void handle_equal(zend_execute_data* execute_data,
                         // get op2 expr
                         retrieve_ref_by_expr(Z_RES_VAL_P(op2), _op1_expr, "Int", __line_number);
                         retrieve_ref_by_expr(Z_RES_VAL_P(op2), _op2_expr, "Int", __line_number);
-                        smt_sink->add_equal_expr(_op1_expr, _op2_expr, __line_number);
+                        __equal_then_else(
+                                smt_sink->add_equal_expr(_op1_expr, _op2_expr, __line_number);,
+                                smt_sink->add_nequal_expr(_op1_expr, _op2_expr, __line_number);
+                        )
                         break;
                     }
                     case IS_LONG:
                     case IS_TRUE:
                     case IS_FALSE:
-                        return handle_equal(execute_data, op2, op1, T);
+                        return handle_equal(execute_data, op2, op1, is_equal, T);
                     default:
                         php_printf("Constant value comparison at %d\n", __line_number);
                 }
@@ -340,6 +368,7 @@ static int conc_collect(zend_execute_data *execute_data)
 {
     zval* op1 = get_zval(execute_data, execute_data->opline->op1_type, &execute_data->opline->op1);
     zval* op2 = get_zval(execute_data, execute_data->opline->op2_type, &execute_data->opline->op2);
+    zval* result = get_zval(execute_data, execute_data->opline->result_type, &execute_data->opline->result);
     php_printf("================= lo: %d =================\n", execute_data->opline->lineno);
 
     unsigned int callback_code;
@@ -348,7 +377,9 @@ static int conc_collect(zend_execute_data *execute_data)
             handle_assign(execute_data, op1, op2, callback_code);
             break;
         case ZEND_IS_EQUAL:
-            handle_equal(execute_data, op1, op2, callback_code);
+            is_equal_function(result, op1, op2);
+            auto is_equal = Z_TYPE_P(result) == IS_TRUE;
+            handle_equal(execute_data, op1, op2, is_equal, callback_code);
             break;
     }
 

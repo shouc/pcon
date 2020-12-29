@@ -111,10 +111,10 @@ public:
                         "(= v" << v_right << " 0))";
                 break;
             case PCON_IS_INT:
-                sink << "(assert (=(v" << v_left << " " << v_right << ")";
+                sink << "(assert (= v" << v_left << " " << v_right << ")";
                 break;
             case PCON_IS_STRING:
-                sink << "(assert (=(v" << v_left << " \"" << v_right << "\")";
+                sink << "(assert (= v" << v_left << " \"" << v_right << "\")";
                 break;
             default:
                 assert(0);
@@ -127,24 +127,127 @@ public:
         auto left_type = get_type(v_left);
         switch (left_type) {
             case PCON_IS_BOOL:
-                sink << "(assert (=(v" << v_left << " " << v_right << ")";
+                sink << "(assert (= v" << v_left << " " << v_right << ")";
             case PCON_IS_INT:
                 if (v_right)
-                    sink << "(assert (!=(v" << v_left << " 0)";
+                    sink << "(assert (!= v" << v_left << " 0)";
                 else
-                    sink << "(assert (=(v" << v_left << " 0)";
+                    sink << "(assert (= v" << v_left << " 0)";
                 break;
             case PCON_IS_STRING:
                 if (v_right)
-                    sink << "(assert (!=(v" << v_left << " \"\")";
+                    sink << "(assert (!= v" << v_left << " \"\")";
                 else
-                    sink << "(assert (=(v" << v_left << " \"\")";
+                    sink << "(assert (= v" << v_left << " \"\")";
                 break;
             default:
                 assert(0);
         }
         end_with_comment
     }
+
+
+    void add_nequal_expr(const std::string& v_left,
+                        const std::string& v_right comment_arg){
+        auto left_type = get_type(v_left);
+        auto right_type = get_type(v_right);
+        switch (left_type) {
+            case PCON_IS_BOOL:
+                switch (right_type) {
+                    case PCON_IS_BOOL:
+                        sink << "(assert (!= v" << v_left << " v" << v_right << ")";
+                        break;
+                    case PCON_IS_INT:
+                        sink << "(assert (ite v" << v_left << " "
+                                "(= v" << v_right << " 0) "
+                                "(!= v" << v_right << " 0))";
+                        break;
+                    case PCON_IS_STRING:
+                        sink << "(assert (ite v" << v_left << " "
+                                "(= v" << v_right << " \"\") "
+                                "(!= v" << v_right << " \"\"))";
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case PCON_IS_INT:
+                switch (right_type) {
+                    case PCON_IS_BOOL:
+                        return add_nequal_expr(v_right, v_left, comment);
+                    case PCON_IS_INT:
+                        sink << "(assert (!= v" << v_left << " v" << v_right << ")";
+                        break;
+                    case PCON_IS_STRING:
+                        sink << "(assert (!= int.to.str(v" << v_left << ") v" << v_right << ")";
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case PCON_IS_STRING:
+                switch (right_type) {
+                    case PCON_IS_BOOL:
+                    case PCON_IS_INT:
+                        return add_nequal_expr(v_right, v_left, comment);
+                    case PCON_IS_STRING:
+                        sink << "(assert (!= v" << v_left << " v" << v_right << ")";
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            default:
+                break;
+        }
+        end_with_comment
+    }
+
+    void add_nequal(const std::string& v_left,
+                   const long& v_right comment_arg){
+        auto left_type = get_type(v_left);
+        switch (left_type) {
+            case PCON_IS_BOOL:
+                sink << "(assert (ite v" << v_left << " "
+                                                      "(= v" << v_right << " 0) "
+                                                                            "(!= v" << v_right << " 0))";
+                break;
+            case PCON_IS_INT:
+                sink << "(assert (!= v" << v_left << " " << v_right << ")";
+                break;
+            case PCON_IS_STRING:
+                sink << "(assert (!= v" << v_left << " \"" << v_right << "\")";
+                break;
+            default:
+                assert(0);
+        }
+        end_with_comment
+    }
+
+    void add_nequal(const std::string& v_left,
+                   const bool& v_right comment_arg){
+        auto left_type = get_type(v_left);
+        switch (left_type) {
+            case PCON_IS_BOOL:
+                sink << "(assert (!= v" << v_left << " " << v_right << ")";
+            case PCON_IS_INT:
+                if (v_right)
+                    sink << "(assert (= v" << v_left << " 0)";
+                else
+                    sink << "(assert (!= v" << v_left << " 0)";
+                break;
+            case PCON_IS_STRING:
+                if (v_right)
+                    sink << "(assert (= v" << v_left << " \"\")";
+                else
+                    sink << "(assert (!= v" << v_left << " \"\")";
+                break;
+            default:
+                assert(0);
+        }
+        end_with_comment
+    }
+
     ~smt(){
         std::ofstream smt_file;
         time_t t = time(nullptr);
