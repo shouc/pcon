@@ -18,12 +18,12 @@ make && make install
 ### Example
 ```php
 <?php
-$a = $argv; // abstract interpretation
+$a = $argv; // uninterpreted variable
 $b = true;
 echo $b == $a; // type juggling
 ```
 
-would yield
+would yield SMT-LIBv2 file
 ```
 (declare-const v0x7f52fba5c008 Int);L2
 (assert (!= v0x7f52fba5c008 0));L4
